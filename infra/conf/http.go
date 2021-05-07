@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 
 	"github.com/golang/protobuf/proto"
-	"v2ray.com/core/common/protocol"
-	"v2ray.com/core/common/serial"
-	"v2ray.com/core/proxy/http"
+
+	"github.com/v2fly/v2ray-core/v4/common/protocol"
+	"github.com/v2fly/v2ray-core/v4/common/serial"
+	"github.com/v2fly/v2ray-core/v4/infra/conf/cfgcommon"
+	"github.com/v2fly/v2ray-core/v4/proxy/http"
 )
 
 type HTTPAccount struct {
@@ -46,9 +48,9 @@ func (c *HTTPServerConfig) Build() (proto.Message, error) {
 }
 
 type HTTPRemoteConfig struct {
-	Address *Address          `json:"address"`
-	Port    uint16            `json:"port"`
-	Users   []json.RawMessage `json:"users"`
+	Address *cfgcommon.Address `json:"address"`
+	Port    uint16             `json:"port"`
+	Users   []json.RawMessage  `json:"users"`
 }
 type HTTPClientConfig struct {
 	Servers []*HTTPRemoteConfig `json:"servers"`

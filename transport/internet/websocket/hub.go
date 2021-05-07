@@ -3,24 +3,31 @@
 package websocket
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/base64"
+	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
-	"v2ray.com/core/common"
-	"v2ray.com/core/common/net"
-	http_proto "v2ray.com/core/common/protocol/http"
-	"v2ray.com/core/common/session"
-	"v2ray.com/core/transport/internet"
-	v2tls "v2ray.com/core/transport/internet/tls"
+
+	"github.com/v2fly/v2ray-core/v4/common"
+	"github.com/v2fly/v2ray-core/v4/common/net"
+	http_proto "github.com/v2fly/v2ray-core/v4/common/protocol/http"
+	"github.com/v2fly/v2ray-core/v4/common/session"
+	"github.com/v2fly/v2ray-core/v4/transport/internet"
+	v2tls "github.com/v2fly/v2ray-core/v4/transport/internet/tls"
 )
 
 type requestHandler struct {
-	path string
-	ln   *Listener
+	path                string
+	ln                  *Listener
+	earlyDataEnabled    bool
+	earlyDataHeaderName string
 }
 
 var upgrader = &websocket.Upgrader{
@@ -33,10 +40,29 @@ var upgrader = &websocket.Upgrader{
 }
 
 func (h *requestHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	if request.URL.Path != h.path {
-		writer.WriteHeader(http.StatusNotFound)
-		return
+	var earlyData io.Reader
+	if !h.earlyDataEnabled { // nolint: gocritic
+		if request.URL.Path != h.path {
+			writer.WriteHeader(http.StatusNotFound)
+			return
+		}
+	} else if h.earlyDataHeaderName != "" {
+		if request.URL.Path != h.path {
+			writer.WriteHeader(http.StatusNotFound)
+			return
+		}
+		earlyDataStr := request.Header.Get(h.earlyDataHeaderName)
+		earlyData = base64.NewDecoder(base64.RawURLEncoding, bytes.NewReader([]byte(earlyDataStr)))
+	} else {
+		if strings.HasPrefix(request.URL.RequestURI(), h.path) {
+			earlyDataStr := request.URL.RequestURI()[len(h.path):]
+			earlyData = base64.NewDecoder(base64.RawURLEncoding, bytes.NewReader([]byte(earlyDataStr)))
+		} else {
+			writer.WriteHeader(http.StatusNotFound)
+			return
+		}
 	}
+
 	conn, err := upgrader.Upgrade(writer, request, nil)
 	if err != nil {
 		newError("failed to convert to WebSocket connection").Base(err).WriteToLog()
@@ -51,8 +77,11 @@ func (h *requestHandler) ServeHTTP(writer http.ResponseWriter, request *http.Req
 			Port: int(0),
 		}
 	}
-
-	h.ln.addConn(newConnection(conn, remoteAddr))
+	if earlyData == nil {
+		h.ln.addConn(newConnection(conn, remoteAddr))
+	} else {
+		h.ln.addConn(newConnectionWithEarlyData(conn, remoteAddr, earlyData))
+	}
 }
 
 type Listener struct {
@@ -113,14 +142,22 @@ func ListenWS(ctx context.Context, address net.Address, port net.Port, streamSet
 	}
 
 	l.listener = listener
+	var useEarlyData = false
+	var earlyDataHeaderName = ""
+	if wsSettings.MaxEarlyData != 0 {
+		useEarlyData = true
+		earlyDataHeaderName = wsSettings.EarlyDataHeaderName
+	}
 
 	l.server = http.Server{
 		Handler: &requestHandler{
-			path: wsSettings.GetNormalizedPath(),
-			ln:   l,
+			path:                wsSettings.GetNormalizedPath(),
+			ln:                  l,
+			earlyDataEnabled:    useEarlyData,
+			earlyDataHeaderName: earlyDataHeaderName,
 		},
 		ReadHeaderTimeout: time.Second * 4,
-		MaxHeaderBytes:    2048,
+		MaxHeaderBytes:    http.DefaultMaxHeaderBytes,
 	}
 
 	go func() {

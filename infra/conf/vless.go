@@ -8,12 +8,13 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"v2ray.com/core/common/net"
-	"v2ray.com/core/common/protocol"
-	"v2ray.com/core/common/serial"
-	"v2ray.com/core/proxy/vless"
-	"v2ray.com/core/proxy/vless/inbound"
-	"v2ray.com/core/proxy/vless/outbound"
+	"github.com/v2fly/v2ray-core/v4/common/net"
+	"github.com/v2fly/v2ray-core/v4/common/protocol"
+	"github.com/v2fly/v2ray-core/v4/common/serial"
+	"github.com/v2fly/v2ray-core/v4/infra/conf/cfgcommon"
+	"github.com/v2fly/v2ray-core/v4/proxy/vless"
+	"github.com/v2fly/v2ray-core/v4/proxy/vless/inbound"
+	"github.com/v2fly/v2ray-core/v4/proxy/vless/outbound"
 )
 
 type VLessInboundFallback struct {
@@ -120,9 +121,9 @@ func (c *VLessInboundConfig) Build() (proto.Message, error) {
 }
 
 type VLessOutboundVnext struct {
-	Address *Address          `json:"address"`
-	Port    uint16            `json:"port"`
-	Users   []json.RawMessage `json:"users"`
+	Address *cfgcommon.Address `json:"address"`
+	Port    uint16             `json:"port"`
+	Users   []json.RawMessage  `json:"users"`
 }
 
 type VLessOutboundConfig struct {

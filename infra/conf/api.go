@@ -3,11 +3,15 @@ package conf
 import (
 	"strings"
 
-	"v2ray.com/core/app/commander"
-	loggerservice "v2ray.com/core/app/log/command"
-	handlerservice "v2ray.com/core/app/proxyman/command"
-	statsservice "v2ray.com/core/app/stats/command"
-	"v2ray.com/core/common/serial"
+	"github.com/jhump/protoreflect/desc"
+	"github.com/jhump/protoreflect/dynamic"
+
+	"github.com/v2fly/v2ray-core/v4/app/commander"
+	loggerservice "github.com/v2fly/v2ray-core/v4/app/log/command"
+	observatoryservice "github.com/v2fly/v2ray-core/v4/app/observatory/command"
+	handlerservice "github.com/v2fly/v2ray-core/v4/app/proxyman/command"
+	statsservice "github.com/v2fly/v2ray-core/v4/app/stats/command"
+	"github.com/v2fly/v2ray-core/v4/common/serial"
 )
 
 type APIConfig struct {
@@ -31,6 +35,18 @@ func (c *APIConfig) Build() (*commander.Config, error) {
 			services = append(services, serial.ToTypedMessage(&loggerservice.Config{}))
 		case "statsservice":
 			services = append(services, serial.ToTypedMessage(&statsservice.Config{}))
+		case "observatoryservice":
+			services = append(services, serial.ToTypedMessage(&observatoryservice.Config{}))
+		default:
+			if !strings.HasPrefix(s, "#") {
+				continue
+			}
+			message, err := desc.LoadMessageDescriptor(s[1:])
+			if err != nil || message == nil {
+				return nil, newError("Cannot find API", s, "").Base(err)
+			}
+			serviceConfig := dynamic.NewMessage(message)
+			services = append(services, serial.ToTypedMessage(serviceConfig))
 		}
 	}
 

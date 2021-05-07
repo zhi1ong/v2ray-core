@@ -11,12 +11,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"v2ray.com/core/common"
-	"v2ray.com/core/common/dice"
-	"v2ray.com/core/common/protocol"
-	"v2ray.com/core/common/serial"
-	"v2ray.com/core/common/task"
-	"v2ray.com/core/proxy/vmess/aead"
+	"github.com/v2fly/v2ray-core/v4/common"
+	"github.com/v2fly/v2ray-core/v4/common/dice"
+	"github.com/v2fly/v2ray-core/v4/common/protocol"
+	"github.com/v2fly/v2ray-core/v4/common/serial"
+	"github.com/v2fly/v2ray-core/v4/common/task"
+	"github.com/v2fly/v2ray-core/v4/proxy/vmess/aead"
 )
 
 const (
@@ -42,6 +42,8 @@ type TimedUserValidator struct {
 	behaviorFused bool
 
 	aeadDecoderHolder *aead.AuthIDDecoderHolder
+
+	legacyWarnShown bool
 }
 
 type indexTimePair struct {
@@ -245,6 +247,17 @@ func (v *TimedUserValidator) BurnTaintFuse(userHash []byte) error {
 		return ErrTainted
 	}
 	return ErrNotFound
+}
+
+/* ShouldShowLegacyWarn will return whether a Legacy Warning should be shown
+Not guaranteed to only return true once for every inbound, but it is okay.
+*/
+func (v *TimedUserValidator) ShouldShowLegacyWarn() bool {
+	if v.legacyWarnShown {
+		return false
+	}
+	v.legacyWarnShown = true
+	return true
 }
 
 var ErrNotFound = newError("Not Found")

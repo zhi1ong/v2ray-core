@@ -3,16 +3,17 @@ package outbound_test
 import (
 	"context"
 	"testing"
+	_ "unsafe"
 
-	"v2ray.com/core"
-	"v2ray.com/core/app/policy"
-	. "v2ray.com/core/app/proxyman/outbound"
-	"v2ray.com/core/app/stats"
-	"v2ray.com/core/common/net"
-	"v2ray.com/core/common/serial"
-	"v2ray.com/core/features/outbound"
-	"v2ray.com/core/proxy/freedom"
-	"v2ray.com/core/transport/internet"
+	core "github.com/v2fly/v2ray-core/v4"
+	"github.com/v2fly/v2ray-core/v4/app/policy"
+	. "github.com/v2fly/v2ray-core/v4/app/proxyman/outbound"
+	"github.com/v2fly/v2ray-core/v4/app/stats"
+	"github.com/v2fly/v2ray-core/v4/common/net"
+	"github.com/v2fly/v2ray-core/v4/common/serial"
+	"github.com/v2fly/v2ray-core/v4/features/outbound"
+	"github.com/v2fly/v2ray-core/v4/proxy/freedom"
+	"github.com/v2fly/v2ray-core/v4/transport/internet"
 )
 
 func TestInterfaces(t *testing.T) {
@@ -20,7 +21,8 @@ func TestInterfaces(t *testing.T) {
 	_ = (outbound.Manager)(new(Manager))
 }
 
-const v2rayKey core.V2rayKey = 1
+//go:linkname toContext github.com/v2fly/v2ray-core/v4.toContext
+func toContext(ctx context.Context, v *core.Instance) context.Context
 
 func TestOutboundWithoutStatCounter(t *testing.T) {
 	config := &core.Config{
@@ -38,7 +40,7 @@ func TestOutboundWithoutStatCounter(t *testing.T) {
 
 	v, _ := core.New(config)
 	v.AddFeature((outbound.Manager)(new(Manager)))
-	ctx := context.WithValue(context.Background(), v2rayKey, v)
+	ctx := toContext(context.Background(), v)
 	h, _ := NewHandler(ctx, &core.OutboundHandlerConfig{
 		Tag:           "tag",
 		ProxySettings: serial.ToTypedMessage(&freedom.Config{}),
@@ -67,7 +69,7 @@ func TestOutboundWithStatCounter(t *testing.T) {
 
 	v, _ := core.New(config)
 	v.AddFeature((outbound.Manager)(new(Manager)))
-	ctx := context.WithValue(context.Background(), v2rayKey, v)
+	ctx := toContext(context.Background(), v)
 	h, _ := NewHandler(ctx, &core.OutboundHandlerConfig{
 		Tag:           "tag",
 		ProxySettings: serial.ToTypedMessage(&freedom.Config{}),

@@ -8,19 +8,20 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"v2ray.com/core/common/net"
-	"v2ray.com/core/common/protocol"
-	"v2ray.com/core/common/serial"
-	"v2ray.com/core/proxy/trojan"
+	"github.com/v2fly/v2ray-core/v4/common/net"
+	"github.com/v2fly/v2ray-core/v4/common/protocol"
+	"github.com/v2fly/v2ray-core/v4/common/serial"
+	"github.com/v2fly/v2ray-core/v4/infra/conf/cfgcommon"
+	"github.com/v2fly/v2ray-core/v4/proxy/trojan"
 )
 
 // TrojanServerTarget is configuration of a single trojan server
 type TrojanServerTarget struct {
-	Address  *Address `json:"address"`
-	Port     uint16   `json:"port"`
-	Password string   `json:"password"`
-	Email    string   `json:"email"`
-	Level    byte     `json:"level"`
+	Address  *cfgcommon.Address `json:"address"`
+	Port     uint16             `json:"port"`
+	Password string             `json:"password"`
+	Email    string             `json:"email"`
+	Level    byte               `json:"level"`
 }
 
 // TrojanClientConfig is configuration of trojan servers

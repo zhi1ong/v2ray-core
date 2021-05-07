@@ -5,13 +5,14 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"v2ray.com/core/transport/internet/headers/http"
-	"v2ray.com/core/transport/internet/headers/noop"
-	"v2ray.com/core/transport/internet/headers/srtp"
-	"v2ray.com/core/transport/internet/headers/tls"
-	"v2ray.com/core/transport/internet/headers/utp"
-	"v2ray.com/core/transport/internet/headers/wechat"
-	"v2ray.com/core/transport/internet/headers/wireguard"
+	"github.com/v2fly/v2ray-core/v4/infra/conf/cfgcommon"
+	"github.com/v2fly/v2ray-core/v4/transport/internet/headers/http"
+	"github.com/v2fly/v2ray-core/v4/transport/internet/headers/noop"
+	"github.com/v2fly/v2ray-core/v4/transport/internet/headers/srtp"
+	"github.com/v2fly/v2ray-core/v4/transport/internet/headers/tls"
+	"github.com/v2fly/v2ray-core/v4/transport/internet/headers/utp"
+	"github.com/v2fly/v2ray-core/v4/transport/internet/headers/wechat"
+	"github.com/v2fly/v2ray-core/v4/transport/internet/headers/wireguard"
 )
 
 type NoOpAuthenticator struct{}
@@ -57,13 +58,13 @@ func (DTLSAuthenticator) Build() (proto.Message, error) {
 }
 
 type AuthenticatorRequest struct {
-	Version string                 `json:"version"`
-	Method  string                 `json:"method"`
-	Path    StringList             `json:"path"`
-	Headers map[string]*StringList `json:"headers"`
+	Version string                           `json:"version"`
+	Method  string                           `json:"method"`
+	Path    cfgcommon.StringList             `json:"path"`
+	Headers map[string]*cfgcommon.StringList `json:"headers"`
 }
 
-func sortMapKeys(m map[string]*StringList) []string {
+func sortMapKeys(m map[string]*cfgcommon.StringList) []string {
 	var keys []string
 	for key := range m {
 		keys = append(keys, key)
@@ -133,10 +134,10 @@ func (v *AuthenticatorRequest) Build() (*http.RequestConfig, error) {
 }
 
 type AuthenticatorResponse struct {
-	Version string                 `json:"version"`
-	Status  string                 `json:"status"`
-	Reason  string                 `json:"reason"`
-	Headers map[string]*StringList `json:"headers"`
+	Version string                           `json:"version"`
+	Status  string                           `json:"status"`
+	Reason  string                           `json:"reason"`
+	Headers map[string]*cfgcommon.StringList `json:"headers"`
 }
 
 func (v *AuthenticatorResponse) Build() (*http.ResponseConfig, error) {
